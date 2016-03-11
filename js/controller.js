@@ -239,7 +239,7 @@
 
             // Turn lights off
             AnnyangService.addCommand(commands['light_action']['voice'], function(state, action) {
-                HueService.performUpdate(state + " " + action);
+                LW12Service.performUpdate(state + " " + action);
             });
 
             //Show giphy image
