@@ -26,6 +26,11 @@ var config = {
         uername : "", // The username used to control your hue
         group : "0" // The group you'd like the mirror to control (0 is all hue lights connected to your hub)
     },
+	lw12 : {
+		fhemip: "", //IP of fmem server
+		fhemport: "",
+		uselw12: false, 
+	}
     // Calendar (An array of iCals)
     calendar: {
       icals : [], // Be sure to wrap your URLs in quotes

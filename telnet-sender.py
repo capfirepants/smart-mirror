@@ -1,14 +1,18 @@
 import getpass
 import sys
 import telnetlib
+import json
 
-HOST = "192.168.69.9"
-PORT = 7072
+with open('config.js') as json_data_file:
+    data = json.load(json_data_file)
+print(data)
+
+HOST = data['lw12']['fhemip']
+PORT = data['lw12']['fhemport']
 print "python running, printing args passed to script:"
 print sys.argv[1]
 tn = telnetlib.Telnet(HOST,PORT)
 
-#tn.write("\n\n\n")
 tn.write(sys.argv[1])
 tn.write("\n")
 tn.write("exit\n")

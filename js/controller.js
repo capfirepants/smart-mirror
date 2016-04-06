@@ -38,6 +38,7 @@
         tmhDynamicLocale.set(config.language.toLowerCase());
         moment.locale(config.language);
         console.log('moment local', moment.locale());
+		$scope.lwswitch = config.lw12.uselw12;
         
         //Update the time
         function updateTime(){
@@ -265,7 +266,11 @@
 
             // Turn lights off
             addCommand('light_action', function(state, action) {
-                LW12Service.performUpdate(state + " " + action);
+				if ($scope.lwswitch) { //Check if 
+					LW12Service.performUpdate(state + " " + action);
+				} else {
+					HueService.performUpdate(state + " " + action);
+				}
             });
 
             //Show giphy image
