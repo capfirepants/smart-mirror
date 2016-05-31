@@ -15,6 +15,8 @@
             TrafficService,
             TimerService,
             ReminderService,
+            SearchService,
+            SoundCloudService,
             $rootScope, $scope, $timeout, $interval, tmhDynamicLocale, $translate) {
         var _this = this;
         var DEFAULT_COMMAND_TEXT = 'Say "What can I say?" to see a list of commands...';
@@ -61,6 +63,10 @@
             });
             restCommand();
 
+            //Initialize SoundCloud
+            var playing = false, sound;
+            SoundCloudService.init();
+
             var refreshMirrorData = function() {
                 //Get our location and then get the weather for our location
                 GeolocationService.getLocation({enableHighAccuracy: true}).then(function(geoposition){
@@ -84,8 +90,6 @@
                         };
 
                     });
-
-
                 }, function(error){
                     console.log(error);
                 });
@@ -151,12 +155,12 @@
             $interval(refreshTrafficData, config.traffic.reload_interval * 60000);
 
             var refreshComic = function () {
-            	console.log("Refreshing comic");
-            	ComicService.initDilbert().then(function(data) {
-            		console.log("Dilbert comic initialized");
-            	}, function(error) {
-            		console.log(error);
-            	});
+                console.log("Refreshing comic");
+                ComicService.initDilbert().then(function(data) {
+                    console.log("Dilbert comic initialized");
+                }, function(error) {
+                    console.log(error);
+                });
             };
 
             refreshComic();
@@ -245,9 +249,60 @@
                 $scope.focus = "map";
             });
 
-            // Search images
-            addCommand('images_search', function(term) {
-                console.debug("Showing", term);
+            //SoundCloud search and play
+            addCommand('sc_play', function(query) {
+                SoundCloudService.searchSoundCloud(query).then(function(response){
+                    SC.stream('/tracks/' + response[0].id).then(function(player){
+                        player.play();
+                        sound = player;
+                        playing = true;
+                    });
+
+                    if (response[0].artwork_url){
+                        $scope.scThumb = response[0].artwork_url.replace("-large.", "-t500x500.");
+                    } else {
+                        $scope.scThumb = 'http://i.imgur.com/8Jqd33w.jpg?1';
+                    }
+                    $scope.scWaveform = response[0].waveform_url;
+                    $scope.scTrack = response[0].title;
+                    $scope.focus = "sc";
+                    SoundCloudService.startVisualizer();
+                });
+            });
+            
+            //SoundCloud stop
+            addCommand('sc_pause', function() {
+                sound.pause();
+                SoundCloudService.stopVisualizer();
+                $scope.focus = "default";
+            });
+            //SoundCloud resume
+            addCommand('sc_resume', function() {
+                sound.play();
+                SoundCloudService.startVisualizer();
+                $scope.focus = "sc";
+            });
+            //SoundCloud replay
+            addCommand('sc_replay', function() {
+                sound.seek(0);
+                sound.play();
+                SoundCloudService.startVisualizer();
+                $scope.focus = "sc";
+            });
+
+            //Search for a video
+            addCommand('video_search', function(query){
+                SearchService.searchYouTube(query).then(function(results){
+                    //Set cc_load_policy=1 to force captions
+                    $scope.video = 'http://www.youtube.com/embed/'+results.data.items[0].id.videoId+'?autoplay=1&controls=0&iv_load_policy=3&enablejsapi=1&showinfo=0';
+                    $scope.focus = "video";
+                });
+            });
+            //Stop video
+            addCommand('video_stop', function() {
+              var iframe = document.getElementsByTagName("iframe")[0].contentWindow;
+              iframe.postMessage('{"event":"command","func":"' + 'stopVideo' +   '","args":""}', '*');
+              $scope.focus = "default";
             });
 
             // Set a reminder
